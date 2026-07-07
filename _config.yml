@@ -1,0 +1,6 @@
+﻿title: 听凡 · HiFi入门指南
+description: 把HiFi术语翻译成人话，让普通人也能听懂自己的耳朵
+remote_theme: pages-themes/cayman@v0.2.0
+plugins:
+  - jekyll-remote-theme
+show_downloads: false
