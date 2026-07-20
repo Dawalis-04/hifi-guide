@@ -38,44 +38,54 @@ function buildHeadphones(THREE) {
   const headphones = new THREE.Group();
   headphones.name = "Over-ear headphones";
 
-  const graphite = new THREE.MeshPhysicalMaterial({
-    color: 0x17201e,
-    metalness: 0.68,
-    roughness: 0.3,
-    clearcoat: 0.42,
-    clearcoatRoughness: 0.28
+  const shellMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x1d2321,
+    metalness: 0.06,
+    roughness: 0.68,
+    clearcoat: 0.08,
+    clearcoatRoughness: 0.72
   });
-  const graphiteEdge = new THREE.MeshStandardMaterial({
-    color: 0x34413d,
-    metalness: 0.88,
-    roughness: 0.23
+  const faceMaterial = new THREE.MeshPhysicalMaterial({
+    color: 0x282e2c,
+    metalness: 0.04,
+    roughness: 0.64,
+    clearcoat: 0.06,
+    clearcoatRoughness: 0.78
   });
-  const brushedMetal = new THREE.MeshStandardMaterial({
-    color: 0x82918b,
-    metalness: 0.94,
-    roughness: 0.2
+  const armMaterial = new THREE.MeshStandardMaterial({
+    color: 0x434b48,
+    metalness: 0.32,
+    roughness: 0.5
   });
-  const cushion = new THREE.MeshStandardMaterial({
-    color: 0x090d0c,
-    metalness: 0.02,
-    roughness: 0.94
+  const detailMaterial = new THREE.MeshStandardMaterial({
+    color: 0x101513,
+    metalness: 0.03,
+    roughness: 0.8
+  });
+  const cushion = new THREE.MeshPhysicalMaterial({
+    color: 0x090c0b,
+    metalness: 0,
+    roughness: 0.94,
+    sheen: 0.16,
+    sheenColor: 0x28312e,
+    sheenRoughness: 0.88
   });
   const acousticCloth = new THREE.MeshStandardMaterial({
-    color: 0x202b28,
-    metalness: 0.18,
-    roughness: 0.86
+    color: 0x161c1a,
+    metalness: 0,
+    roughness: 0.96
   });
   const ringMaterial = new THREE.MeshStandardMaterial({
     color: MODE_SETTINGS.mid.color,
     emissive: MODE_SETTINGS.mid.color,
-    emissiveIntensity: 1.35,
-    metalness: 0.28,
-    roughness: 0.3
+    emissiveIntensity: 0.75,
+    metalness: 0,
+    roughness: 0.52
   });
   const glowMaterial = new THREE.MeshBasicMaterial({
     color: MODE_SETTINGS.mid.color,
     transparent: true,
-    opacity: 0.09,
+    opacity: 0.055,
     blending: THREE.AdditiveBlending,
     depthWrite: false,
     toneMapped: false
@@ -87,158 +97,168 @@ function buildHeadphones(THREE) {
     return new THREE.Mesh(geometry, material);
   };
 
-  const makeDepthCylinder = (radiusFront, radiusBack, depth, segments = 48) => {
-    const geometry = new THREE.CylinderGeometry(
-      radiusFront,
-      radiusBack,
-      depth,
-      segments,
-      1,
-      false
+  const makeRoundedRectShape = (width, height, radius) => {
+    const shape = new THREE.Shape();
+    const halfWidth = width / 2;
+    const halfHeight = height / 2;
+    const corner = Math.min(radius, halfWidth, halfHeight);
+
+    shape.moveTo(-halfWidth + corner, -halfHeight);
+    shape.lineTo(halfWidth - corner, -halfHeight);
+    shape.quadraticCurveTo(halfWidth, -halfHeight, halfWidth, -halfHeight + corner);
+    shape.lineTo(halfWidth, halfHeight - corner);
+    shape.quadraticCurveTo(halfWidth, halfHeight, halfWidth - corner, halfHeight);
+    shape.lineTo(-halfWidth + corner, halfHeight);
+    shape.quadraticCurveTo(-halfWidth, halfHeight, -halfWidth, halfHeight - corner);
+    shape.lineTo(-halfWidth, -halfHeight + corner);
+    shape.quadraticCurveTo(-halfWidth, -halfHeight, -halfWidth + corner, -halfHeight);
+    shape.closePath();
+
+    return shape;
+  };
+
+  const makeRoundedExtrusion = ({ width, height, radius, depth, bevel }) => {
+    const geometry = new THREE.ExtrudeGeometry(
+      makeRoundedRectShape(width, height, radius),
+      {
+        depth,
+        steps: 1,
+        curveSegments: 28,
+        bevelEnabled: true,
+        bevelSegments: 5,
+        bevelSize: bevel,
+        bevelThickness: bevel
+      }
     );
-    geometry.rotateX(Math.PI / 2);
+    geometry.center();
+    geometry.computeVertexNormals();
     return geometry;
   };
 
   const headbandPoints = [
-    new THREE.Vector3(-2.37, 1.24, -0.14),
-    new THREE.Vector3(-2.2, 1.95, -0.15),
-    new THREE.Vector3(-1.4, 2.64, -0.16),
-    new THREE.Vector3(0, 2.91, -0.16),
-    new THREE.Vector3(1.4, 2.64, -0.16),
-    new THREE.Vector3(2.2, 1.95, -0.15),
-    new THREE.Vector3(2.37, 1.24, -0.14)
+    new THREE.Vector3(-2.02, 1.08, -0.1),
+    new THREE.Vector3(-1.94, 1.78, -0.12),
+    new THREE.Vector3(-1.4, 2.5, -0.14),
+    new THREE.Vector3(-0.7, 2.82, -0.15),
+    new THREE.Vector3(0, 2.91, -0.15),
+    new THREE.Vector3(0.7, 2.82, -0.15),
+    new THREE.Vector3(1.4, 2.5, -0.14),
+    new THREE.Vector3(1.94, 1.78, -0.12),
+    new THREE.Vector3(2.02, 1.08, -0.1)
   ];
-  const headband = makeTube(headbandPoints, 0.22, graphite, 84);
+  const headband = makeTube(headbandPoints, 0.145, shellMaterial, 88);
   headband.name = "Headband shell";
   headphones.add(headband);
 
-  const headbandHighlight = makeTube(
-    headbandPoints.map(point => new THREE.Vector3(point.x, point.y, point.z + 0.2)),
-    0.026,
-    brushedMetal,
-    84
-  );
-  headbandHighlight.name = "Headband metal trim";
-  headphones.add(headbandHighlight);
-
   const comfortBand = makeTube([
-    new THREE.Vector3(-1.63, 2.42, 0.02),
-    new THREE.Vector3(-0.88, 2.61, 0.06),
-    new THREE.Vector3(0, 2.67, 0.07),
-    new THREE.Vector3(0.88, 2.61, 0.06),
-    new THREE.Vector3(1.63, 2.42, 0.02)
-  ], 0.14, cushion, 52);
+    new THREE.Vector3(-1.18, 2.56, 0.005),
+    new THREE.Vector3(-0.62, 2.73, 0.025),
+    new THREE.Vector3(0, 2.78, 0.03),
+    new THREE.Vector3(0.62, 2.73, 0.025),
+    new THREE.Vector3(1.18, 2.56, 0.005)
+  ], 0.12, cushion, 56);
   comfortBand.name = "Headband cushion";
   headphones.add(comfortBand);
 
-  const cupShellGeometry = makeDepthCylinder(0.94, 1.01, 0.58, 64);
-  const frontBezelGeometry = makeDepthCylinder(0.83, 0.88, 0.15, 64);
-  const rearPlateGeometry = makeDepthCylinder(0.68, 0.7, 0.075, 48);
-  const padGeometry = new THREE.TorusGeometry(0.7, 0.19, 16, 64);
-  const trimGeometry = new THREE.TorusGeometry(0.91, 0.03, 8, 64);
-  const glowGeometry = new THREE.TorusGeometry(0.91, 0.07, 8, 64);
-  const driverGeometry = new THREE.CircleGeometry(0.55, 64);
-  const driverTrimGeometry = new THREE.TorusGeometry(0.51, 0.018, 8, 48);
-  const rearTrimGeometry = new THREE.TorusGeometry(0.6, 0.027, 8, 48);
-  const pivotGeometry = makeDepthCylinder(0.16, 0.16, 0.105, 32);
+  const cupShellGeometry = makeRoundedExtrusion({
+    width: 1.48,
+    height: 1.98,
+    radius: 0.58,
+    depth: 0.3,
+    bevel: 0.09
+  });
+  const facePlateGeometry = makeRoundedExtrusion({
+    width: 1.36,
+    height: 1.84,
+    radius: 0.53,
+    depth: 0.025,
+    bevel: 0.035
+  });
+  const padGeometry = new THREE.TorusGeometry(0.58, 0.16, 18, 64);
+  const driverGeometry = new THREE.CircleGeometry(0.48, 56);
+  const pivotGeometry = new THREE.CylinderGeometry(0.105, 0.105, 0.07, 32);
+  pivotGeometry.rotateX(Math.PI / 2);
+  const indicatorHousingGeometry = new THREE.CircleGeometry(0.068, 24);
+  const indicatorGeometry = new THREE.CircleGeometry(0.033, 24);
+  const indicatorGlowGeometry = new THREE.CircleGeometry(0.115, 32);
 
   for (const side of [-1, 1]) {
     const cup = new THREE.Group();
     cup.name = side < 0 ? "Left earcup" : "Right earcup";
-    cup.position.set(side * 1.66, -0.78, 0);
-    cup.rotation.y = side * 0.075;
+    cup.position.set(side * 1.56, -0.72, 0);
+    cup.rotation.y = side * 0.055;
+    cup.rotation.z = side * -0.012;
 
-    const shell = new THREE.Mesh(cupShellGeometry, graphite);
-    shell.scale.set(1, 1.16, 1);
+    const shell = new THREE.Mesh(cupShellGeometry, shellMaterial);
     shell.name = "Earcup shell";
     cup.add(shell);
 
-    const bezel = new THREE.Mesh(frontBezelGeometry, graphiteEdge);
-    bezel.position.z = 0.34;
-    bezel.scale.set(1, 1.16, 1);
-    bezel.name = "Front bezel";
-    cup.add(bezel);
+    const facePlate = new THREE.Mesh(facePlateGeometry, faceMaterial);
+    facePlate.position.z = 0.235;
+    facePlate.name = "Continuous outer earcup face";
+    cup.add(facePlate);
 
     const driver = new THREE.Mesh(driverGeometry, acousticCloth);
-    driver.position.z = 0.515;
-    driver.scale.y = 1.16;
+    driver.position.z = -0.405;
+    driver.scale.y = 1.26;
+    driver.rotation.y = Math.PI;
     driver.name = "Acoustic grille";
     cup.add(driver);
 
-    const driverTrim = new THREE.Mesh(driverTrimGeometry, graphiteEdge);
-    driverTrim.position.z = 0.527;
-    driverTrim.scale.y = 1.16;
-    cup.add(driverTrim);
-
     const pad = new THREE.Mesh(padGeometry, cushion);
-    pad.position.z = 0.49;
-    pad.scale.y = 1.16;
+    pad.position.z = -0.32;
+    pad.scale.set(1, 1.25, 0.66);
     pad.name = "Earpad";
     cup.add(pad);
 
-    const lightRing = new THREE.Mesh(trimGeometry, ringMaterial);
-    lightRing.position.z = 0.565;
-    lightRing.scale.y = 1.16;
-    lightRing.name = "Sound mode ring";
-    cup.add(lightRing);
+    const pivotCap = new THREE.Mesh(pivotGeometry, faceMaterial);
+    pivotCap.position.set(side * 0.48, 0.7, 0.245);
+    pivotCap.name = "Flush swivel cap";
+    cup.add(pivotCap);
 
-    const ringGlow = new THREE.Mesh(glowGeometry, glowMaterial);
-    ringGlow.position.z = 0.555;
-    ringGlow.scale.y = 1.16;
-    ringGlow.renderOrder = 2;
-    cup.add(ringGlow);
+    if (side > 0) {
+      const indicatorHousing = new THREE.Mesh(indicatorHousingGeometry, detailMaterial);
+      indicatorHousing.position.set(0.44, -0.7, 0.292);
+      indicatorHousing.name = "Sound mode indicator housing";
+      cup.add(indicatorHousing);
 
-    const rearPlate = new THREE.Mesh(rearPlateGeometry, graphiteEdge);
-    rearPlate.position.z = -0.32;
-    rearPlate.scale.set(1, 1.16, 1);
-    rearPlate.name = "Rear earcup plate";
-    cup.add(rearPlate);
+      const indicator = new THREE.Mesh(indicatorGeometry, ringMaterial);
+      indicator.position.set(0.44, -0.7, 0.297);
+      indicator.name = "Sound mode indicator";
+      cup.add(indicator);
 
-    const rearTrim = new THREE.Mesh(rearTrimGeometry, brushedMetal);
-    rearTrim.position.z = -0.365;
-    rearTrim.scale.y = 1.16;
-    rearTrim.name = "Rear trim";
-    cup.add(rearTrim);
-
-    const hingeFront = new THREE.Mesh(pivotGeometry, brushedMetal);
-    hingeFront.position.set(side * 0.985, 0.36, 0.26);
-    hingeFront.name = "Front hinge";
-    cup.add(hingeFront);
-
-    const hingeRear = hingeFront.clone();
-    hingeRear.position.z = -0.26;
-    hingeRear.name = "Rear hinge";
-    cup.add(hingeRear);
+      const indicatorGlow = new THREE.Mesh(indicatorGlowGeometry, glowMaterial);
+      indicatorGlow.position.set(0.44, -0.7, 0.294);
+      indicatorGlow.renderOrder = 2;
+      indicatorGlow.name = "Sound mode indicator glow";
+      cup.add(indicatorGlow);
+    }
 
     headphones.add(cup);
 
-    for (const z of [-0.25, 0.25]) {
-      const yoke = makeTube([
-        new THREE.Vector3(side * 2.64, -0.43, z),
-        new THREE.Vector3(side * 2.72, 0.16, z),
-        new THREE.Vector3(side * 2.5, 0.71, z),
-        new THREE.Vector3(side * 2.36, 1.08, z)
-      ], 0.064, brushedMetal, 40);
-      yoke.name = "Earcup connector arm";
-      headphones.add(yoke);
-    }
+    const supportArm = makeTube([
+      new THREE.Vector3(side * 2.02, 0.96, -0.06),
+      new THREE.Vector3(side * 2.025, 0.62, -0.035),
+      new THREE.Vector3(side * 2.02, 0.28, 0),
+      new THREE.Vector3(side * 2.04, -0.02, 0.06)
+    ], 0.064, armMaterial, 44);
+    supportArm.name = "Single earcup support arm";
+    headphones.add(supportArm);
 
     const slider = new THREE.Mesh(
-      new THREE.BoxGeometry(0.2, 0.64, 0.16),
-      graphiteEdge
+      new THREE.CapsuleGeometry(0.105, 0.34, 8, 20),
+      shellMaterial
     );
-    slider.position.set(side * 2.36, 1.23, -0.04);
-    slider.rotation.z = side * -0.055;
-    slider.name = "Headband slider";
+    slider.position.set(side * 2.02, 1.02, -0.075);
+    slider.scale.z = 0.72;
+    slider.name = "Seamless headband slider";
     headphones.add(slider);
 
     const sliderInset = new THREE.Mesh(
-      new THREE.BoxGeometry(0.075, 0.48, 0.18),
-      brushedMetal
+      new THREE.CapsuleGeometry(0.034, 0.24, 6, 14),
+      armMaterial
     );
-    sliderInset.position.set(side * 2.36, 1.26, -0.035);
-    sliderInset.rotation.z = side * -0.055;
+    sliderInset.position.set(side * 2.02, 1.015, 0.005);
     headphones.add(sliderInset);
   }
 
@@ -280,10 +300,16 @@ async function createScene(container) {
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 60);
-  const pivot = new THREE.Group();
+  const layoutRoot = new THREE.Group();
+  const revealRoot = new THREE.Group();
+  const interactionRoot = new THREE.Group();
   const model = buildHeadphones(THREE);
-  pivot.add(model.object);
-  scene.add(pivot);
+  const modelBounds = new THREE.Box3().setFromObject(model.object);
+  const modelHalfWidth = (modelBounds.max.x - modelBounds.min.x) / 2;
+  interactionRoot.add(model.object);
+  revealRoot.add(interactionRoot);
+  layoutRoot.add(revealRoot);
+  scene.add(layoutRoot);
 
   const hemisphere = new THREE.HemisphereLight(0xe8fff6, 0x17211e, 2.4);
   const keyLight = new THREE.DirectionalLight(0xffffff, 3.3);
@@ -343,6 +369,13 @@ async function createScene(container) {
   let parallaxY = 0;
   let layoutX = 0.38;
   let layoutY = 0.04;
+  let visibleHeight = 6;
+  let introScaleBase = 1;
+  let introState = container.dataset.presentation === "intro" ? "waiting" : "normal";
+  let introStartedAt = 0;
+  let introResolve = null;
+  let introPromise = null;
+  let webglUnavailable = false;
   let currentMode = "mid";
   const currentRingColor = new THREE.Color(MODE_SETTINGS.mid.color);
   const targetRingColor = currentRingColor.clone();
@@ -369,10 +402,26 @@ async function createScene(container) {
     modeButtons.find(button => button.classList.contains("is-active"))?.dataset.soundMode
   ].find(mode => MODE_SETTINGS[mode]);
 
-  const canAnimate = () => documentVisible && inViewport && !reducedMotion;
+  const completeIntroMotion = () => {
+    introState = "settled";
+    container.dataset.introState = "settled";
+    if (introResolve) {
+      introResolve();
+      introResolve = null;
+      introPromise = null;
+    }
+  };
+
+  const canAnimate = () => (
+    !webglUnavailable
+    && documentVisible
+    && inViewport
+    && (introState === "playing" || (introState === "normal" && !reducedMotion))
+  );
 
   const renderFrame = now => {
     frameRequest = 0;
+    if (webglUnavailable) return;
     const delta = Math.min(Math.max((now - lastFrameTime) / 1000, 0), 0.05);
     lastFrameTime = now;
     elapsed += delta;
@@ -389,18 +438,66 @@ async function createScene(container) {
     parallaxX += (targetParallaxX - parallaxX) * parallaxEase;
     parallaxY += (targetParallaxY - parallaxY) * parallaxEase;
 
-    const idleYaw = reducedMotion ? 0 : Math.sin(elapsed * 0.42) * 0.035;
-    const idlePitch = reducedMotion ? 0 : Math.sin(elapsed * 0.31 + 0.8) * 0.012;
-    const floatY = reducedMotion ? 0 : Math.sin(elapsed * 0.62) * 0.025;
-    pivot.rotation.x = 0.025 + currentPitch + parallaxY * 0.045 + idlePitch;
-    pivot.rotation.y = -0.17 + currentYaw + parallaxX * 0.065 + idleYaw;
-    pivot.rotation.z = parallaxX * -0.012;
-    pivot.position.set(layoutX, layoutY + floatY, 0);
+    const introActive = introState !== "normal";
+    const idleYaw = reducedMotion || introActive ? 0 : Math.sin(elapsed * 0.42) * 0.035;
+    const idlePitch = reducedMotion || introActive ? 0 : Math.sin(elapsed * 0.31 + 0.8) * 0.012;
+    const floatY = reducedMotion || introActive ? 0 : Math.sin(elapsed * 0.62) * 0.025;
+    interactionRoot.rotation.x = 0.025 + currentPitch + parallaxY * 0.045 + idlePitch;
+    interactionRoot.rotation.y = -0.14 + currentYaw + parallaxX * 0.065 + idleYaw;
+    interactionRoot.rotation.z = parallaxX * -0.012;
+    layoutRoot.position.set(layoutX, layoutY + floatY, 0);
+
+    if (introState === "waiting") {
+      revealRoot.visible = false;
+      revealRoot.position.set(0, 0, 0);
+      revealRoot.rotation.set(0, 0, 0);
+      revealRoot.scale.setScalar(introScaleBase);
+    } else if (introState === "playing") {
+      const age = Math.max(0, (now - introStartedAt) / 1000);
+      revealRoot.visible = age >= 0.18;
+
+      if (age < 1.18) {
+        const fall = THREE.MathUtils.clamp((age - 0.18) / 1, 0, 1);
+        const gravity = Math.pow(fall, 2.35);
+        revealRoot.position.y = THREE.MathUtils.lerp(
+          visibleHeight * 0.92,
+          visibleHeight * -0.2,
+          gravity
+        );
+        revealRoot.rotation.x = THREE.MathUtils.lerp(-0.08, 0.045, fall);
+        revealRoot.rotation.z = THREE.MathUtils.lerp(-0.15, 0.075, fall);
+        revealRoot.scale.setScalar(introScaleBase * THREE.MathUtils.lerp(0.86, 0.98, fall));
+      } else {
+        const rise = THREE.MathUtils.clamp((age - 1.18) / 1.48, 0, 1);
+        const damping = Math.exp(-4.65 * rise);
+        const spring = 1 - damping * Math.cos(9.4 * rise);
+        revealRoot.position.y = THREE.MathUtils.lerp(
+          visibleHeight * -0.2,
+          visibleHeight * 0.045,
+          spring
+        );
+        revealRoot.rotation.x = 0.045 * damping * Math.cos(8.2 * rise);
+        revealRoot.rotation.z = 0.075 * damping * Math.cos(9.4 * rise);
+        revealRoot.scale.setScalar(introScaleBase * (0.98 + Math.min(spring, 1.12) * 0.02));
+      }
+
+      if (age >= 2.85) completeIntroMotion();
+    } else if (introState === "settled") {
+      revealRoot.visible = true;
+      revealRoot.position.set(0, visibleHeight * 0.045, 0);
+      revealRoot.rotation.set(0, 0, 0);
+      revealRoot.scale.setScalar(introScaleBase);
+    } else {
+      revealRoot.visible = true;
+      revealRoot.position.set(0, 0, 0);
+      revealRoot.rotation.set(0, 0, 0);
+      revealRoot.scale.setScalar(1);
+    }
 
     const settings = MODE_SETTINGS[currentMode];
     const colorEase = reducedMotion ? 1 : 1 - Math.exp(-9 * delta);
     currentRingColor.lerp(targetRingColor, colorEase);
-    model.ringMaterial.color.copy(currentRingColor).multiplyScalar(0.78);
+    model.ringMaterial.color.copy(currentRingColor).multiplyScalar(0.88);
     model.ringMaterial.emissive.copy(currentRingColor);
     model.glowMaterial.color.copy(currentRingColor);
 
@@ -411,8 +508,8 @@ async function createScene(container) {
     const changePulse = reducedMotion || changeAge >= 0.85
       ? 0
       : Math.sin((changeAge / 0.85) * Math.PI) * (1 - changeAge / 0.85);
-    model.ringMaterial.emissiveIntensity = 1.25 + settings.depth * wave + changePulse * 1.05;
-    model.glowMaterial.opacity = 0.055 + settings.depth * 0.12 * wave + changePulse * 0.11;
+    model.ringMaterial.emissiveIntensity = 0.36 + settings.depth * 0.22 * wave + changePulse * 0.5;
+    model.glowMaterial.opacity = 0.015 + settings.depth * 0.05 * wave + changePulse * 0.045;
 
     renderer.render(scene, camera);
 
@@ -422,7 +519,7 @@ async function createScene(container) {
   };
 
   const requestRender = () => {
-    if (!documentVisible || !inViewport || frameRequest) return;
+    if (webglUnavailable || !documentVisible || !inViewport || frameRequest) return;
     frameRequest = requestAnimationFrame(renderFrame);
   };
 
@@ -430,6 +527,64 @@ async function createScene(container) {
     if (!frameRequest) return;
     cancelAnimationFrame(frameRequest);
     frameRequest = 0;
+  };
+
+  const prepareIntro = () => {
+    if (introResolve) introResolve();
+    introResolve = null;
+    introPromise = null;
+    introState = "waiting";
+    container.dataset.introState = "waiting";
+    targetYaw = 0;
+    currentYaw = 0;
+    targetPitch = 0;
+    currentPitch = 0;
+    yawVelocity = 0;
+    canvas.tabIndex = -1;
+    canvas.setAttribute("aria-hidden", "true");
+    requestRender();
+  };
+
+  const playIntro = () => {
+    if (introState === "playing" && introPromise) return introPromise;
+    if (reducedMotion) {
+      completeIntroMotion();
+      requestRender();
+      return Promise.resolve();
+    }
+
+    introState = "playing";
+    introStartedAt = performance.now();
+    container.dataset.introState = "playing";
+    lastFrameTime = introStartedAt;
+    introPromise = new Promise(resolve => {
+      introResolve = resolve;
+    });
+    requestRender();
+    return introPromise;
+  };
+
+  const finishIntro = () => {
+    if (introResolve) introResolve();
+    introResolve = null;
+    introPromise = null;
+    introState = "normal";
+    container.dataset.introState = "interactive";
+    revealRoot.visible = true;
+    revealRoot.position.set(0, 0, 0);
+    revealRoot.rotation.set(0, 0, 0);
+    revealRoot.scale.setScalar(1);
+    if (container.classList.contains("is-fallback")) {
+      canvas.tabIndex = -1;
+      canvas.setAttribute("aria-hidden", "true");
+    } else {
+      canvas.tabIndex = 0;
+      canvas.removeAttribute("aria-hidden");
+    }
+    requestAnimationFrame(() => {
+      resize();
+      requestRender();
+    });
   };
 
   const setMode = (mode, announceChange = false) => {
@@ -455,22 +610,28 @@ async function createScene(container) {
   setMode(configuredMode || "mid");
 
   const resize = () => {
+    if (webglUnavailable) return;
     const rect = container.getBoundingClientRect();
     const width = Math.round(rect.width);
     const height = Math.round(rect.height);
     if (width < 2 || height < 2) return;
 
-    const mobile = width < 640;
-    const compact = width < 980;
+    const mobile = width <= 640;
+    const compact = width <= 980;
     const shortMobile = mobile && height < 540;
+    const introPresentation = container.dataset.presentation === "intro";
     const pixelRatioLimit = mobile ? 1.45 : 1.75;
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, pixelRatioLimit));
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
 
     const verticalFov = THREE.MathUtils.degToRad(camera.fov);
-    const frameHeight = mobile ? (shortMobile ? 15 : 12) : compact ? 6.8 : 5.62;
-    const frameWidth = mobile ? 6.3 : compact ? 7.7 : 6.65;
+    const frameHeight = introPresentation
+      ? (mobile ? 8.8 : compact ? 7.5 : 7)
+      : mobile ? (shortMobile ? 14.4 : 11.3) : compact ? 10.2 : 5.62;
+    const frameWidth = introPresentation
+      ? (mobile ? 4.8 : compact ? 6.2 : 6.5)
+      : mobile ? 5.2 : compact ? 9.2 : 6.3;
     const distanceForHeight = frameHeight / (2 * Math.tan(verticalFov / 2));
     const distanceForWidth = frameWidth / (2 * Math.tan(verticalFov / 2) * camera.aspect);
     const cameraDistance = Math.max(distanceForHeight, distanceForWidth);
@@ -478,16 +639,22 @@ async function createScene(container) {
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
 
-    const visibleHeight = 2 * cameraDistance * Math.tan(verticalFov / 2);
+    visibleHeight = 2 * cameraDistance * Math.tan(verticalFov / 2);
     const visibleWidth = visibleHeight * camera.aspect;
-    if (mobile) {
+    if (introPresentation) {
       layoutX = 0;
-      layoutY = visibleHeight * (shortMobile ? -0.31 : -0.258);
+      layoutY = 0;
+      introScaleBase = mobile ? 1 : compact ? 1.05 : 1.15;
+    } else if (mobile) {
+      layoutX = 0;
+      layoutY = visibleHeight * (shortMobile ? -0.3 : -0.27);
+      introScaleBase = 1;
     } else {
-      const preferredRightPosition = visibleWidth * (compact ? 0.2 : 0.23);
-      const completeModelLimit = visibleWidth / 2 - 3;
+      const preferredRightPosition = visibleWidth * (compact ? 0.3 : 0.23);
+      const completeModelLimit = visibleWidth / 2 - modelHalfWidth - 0.16;
       layoutX = Math.max(0, Math.min(preferredRightPosition, completeModelLimit));
       layoutY = compact ? -0.08 : 0.04;
+      introScaleBase = 1;
     }
     requestRender();
   };
@@ -505,6 +672,7 @@ async function createScene(container) {
   };
 
   canvas.addEventListener("pointerdown", event => {
+    if (introState !== "normal") return;
     if (activePointer !== null) return;
     activePointer = event.pointerId;
     dragging = true;
@@ -519,6 +687,7 @@ async function createScene(container) {
   });
 
   canvas.addEventListener("pointermove", event => {
+    if (introState !== "normal") return;
     if (dragging && event.pointerId === activePointer) {
       const deltaX = event.clientX - previousPointerX;
       const deltaY = event.clientY - previousPointerY;
@@ -572,6 +741,7 @@ async function createScene(container) {
   });
 
   canvas.addEventListener("keydown", event => {
+    if (introState !== "normal") return;
     if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
     event.preventDefault();
     targetYaw += event.key === "ArrowLeft" ? -0.2 : 0.2;
@@ -609,7 +779,10 @@ async function createScene(container) {
     yawVelocity = 0;
     targetParallaxX = 0;
     targetParallaxY = 0;
-    if (reducedMotion) stopRendering();
+    if (reducedMotion) {
+      stopRendering();
+      if (introState === "playing") completeIntroMotion();
+    }
     lastFrameTime = performance.now();
     requestRender();
   };
@@ -621,10 +794,19 @@ async function createScene(container) {
 
   canvas.addEventListener("webglcontextlost", event => {
     event.preventDefault();
+    webglUnavailable = true;
     stopRendering();
     canvas.hidden = true;
     markFallback(container, new Error("WebGL context lost"));
   });
+
+  if (introState === "waiting") {
+    container.dataset.introState = "waiting";
+    canvas.tabIndex = -1;
+    canvas.setAttribute("aria-hidden", "true");
+  } else {
+    container.dataset.introState = "interactive";
+  }
 
   resize();
   requestRender();
@@ -635,7 +817,10 @@ async function createScene(container) {
     renderer,
     scene,
     camera,
-    setMode
+    setMode,
+    prepareIntro,
+    playIntro,
+    finishIntro
   };
 }
 

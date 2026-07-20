@@ -1,5 +1,7 @@
 (() => {
   const base = "/hifi-guide";
+  const introSessionKey = "tingfan-water-intro-v1";
+  const wait = milliseconds => new Promise(resolve => window.setTimeout(resolve, milliseconds));
   const chapters = [
     {
       title: "第一章 · 听懂HiFi",
@@ -59,6 +61,23 @@
     chapter: chapter.title
   })));
   const currentPage = allPages.find(page => normalizePath(page.path) === currentPath);
+
+  function shouldPlayInitialIntro() {
+    if (new URLSearchParams(window.location.search).get("intro") === "1") return true;
+    try {
+      return window.sessionStorage.getItem(introSessionKey) !== "complete";
+    } catch {
+      return true;
+    }
+  }
+
+  function rememberIntro() {
+    try {
+      window.sessionStorage.setItem(introSessionKey, "complete");
+    } catch {
+      // Storage can be unavailable in strict privacy modes; the intro still works.
+    }
+  }
 
   function makeHeader() {
     const header = document.createElement("header");
@@ -144,11 +163,41 @@
           </div>
           <a class="guide-hero__start" href="${base}/docs/1-basics/what-is-hifi.html">从第一章开始</a>
         </div>
-      </div>`;
+      </div>
+      <button class="guide-intro-replay" type="button" aria-label="重播水面开场" title="重播水面开场">
+        <span aria-hidden="true"></span>
+      </button>`;
 
     originalTitle?.remove();
     if (originalTagline?.tagName === "BLOCKQUOTE") originalTagline.remove();
     return hero;
+  }
+
+  function makeWaterIntro() {
+    const intro = document.createElement("div");
+    intro.className = "guide-intro";
+    intro.setAttribute("role", "dialog");
+    intro.setAttribute("aria-modal", "true");
+    intro.setAttribute("aria-label", "听凡水面开场");
+    intro.innerHTML = `
+      <div class="guide-intro__stage"></div>
+      <div class="guide-intro__ripples" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
+      <div class="guide-intro__water" aria-hidden="true">
+        <span class="guide-intro__surface-ring guide-intro__surface-ring--one"></span>
+        <span class="guide-intro__surface-ring guide-intro__surface-ring--two"></span>
+        <span class="guide-intro__splash guide-intro__splash--one"></span>
+        <span class="guide-intro__splash guide-intro__splash--two"></span>
+        <span class="guide-intro__splash guide-intro__splash--three"></span>
+        <span class="guide-intro__splash guide-intro__splash--four"></span>
+        <span class="guide-intro__splash guide-intro__splash--five"></span>
+      </div>
+      <button class="guide-intro__trigger" type="button" aria-label="触碰水滴，进入听凡" disabled>
+        <span class="guide-intro__drop" aria-hidden="true"></span>
+      </button>
+      <span class="guide-visually-hidden" data-intro-status aria-live="polite">开场正在准备</span>`;
+    return intro;
   }
 
   function initHomeHero(hero) {
@@ -177,6 +226,10 @@
     const title = hero.querySelector("[data-mode-title]");
     const copy = hero.querySelector("[data-mode-copy]");
     const link = hero.querySelector("[data-mode-link]");
+    const scene = hero.querySelector("[data-headphone-scene]");
+    const replayButton = hero.querySelector(".guide-intro-replay");
+    let controllerPromise;
+    let introRunning = false;
 
     const selectMode = mode => {
       const content = modes[mode];
@@ -200,8 +253,7 @@
       next.click();
     });
 
-    import(`${base}/assets/js/headphone-scene.js`).catch(() => {
-      const scene = hero.querySelector("[data-headphone-scene]");
+    const markSceneFallback = () => {
       if (!scene) return;
       scene.classList.add("is-fallback");
       scene.dataset.renderer = "fallback";
@@ -209,7 +261,127 @@
       scene.removeAttribute("aria-busy");
       scene.setAttribute("role", "img");
       scene.setAttribute("aria-label", "头戴式耳机静态示意图");
-    });
+    };
+
+    const ensureController = () => {
+      if (!controllerPromise) {
+        controllerPromise = import(`${base}/assets/js/headphone-scene.js`)
+          .then(module => module.initHeadphoneScene(scene))
+          .catch(() => {
+            markSceneFallback();
+            return null;
+          });
+      }
+      return controllerPromise;
+    };
+
+    const runWaterIntro = async ({ restoreFocus = false } = {}) => {
+      if (introRunning || !scene) return;
+      introRunning = true;
+
+      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const intro = makeWaterIntro();
+      const stage = intro.querySelector(".guide-intro__stage");
+      const trigger = intro.querySelector(".guide-intro__trigger");
+      const status = intro.querySelector("[data-intro-status]");
+      scene.dataset.presentation = "intro";
+      stage.appendChild(scene);
+      document.body.appendChild(intro);
+      document.body.classList.add("guide-intro-active");
+      document.dispatchEvent(new CustomEvent("guide-intro:statechange"));
+      requestAnimationFrame(() => intro.classList.add("is-mounted"));
+
+      let controller = null;
+      let removeTriggerListener = () => {};
+      let resolveSkip;
+      let skippedByKeyboard = false;
+      const skipPromise = new Promise(resolve => {
+        resolveSkip = () => resolve({ type: "skip", keyboard: true });
+      });
+      const handleKeydown = event => {
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        skippedByKeyboard = true;
+        resolveSkip();
+      };
+      document.addEventListener("keydown", handleKeydown);
+
+      try {
+        const controllerLoad = ensureController().then(value => {
+          controller = value;
+          return value;
+        });
+        const loadResult = await Promise.race([
+          controllerLoad.then(value => ({ type: "loaded", value })),
+          skipPromise
+        ]);
+        let action = loadResult;
+
+        if (loadResult.type === "loaded") {
+          controller = loadResult.value;
+          controller?.prepareIntro();
+          intro.classList.add("is-ready");
+          trigger.disabled = false;
+          status.textContent = "水滴已准备好";
+          trigger.focus({ preventScroll: true });
+
+          const startPromise = new Promise(resolve => {
+            const start = event => resolve({ type: "start", keyboard: event.detail === 0 });
+            trigger.addEventListener("click", start, { once: true });
+            removeTriggerListener = () => trigger.removeEventListener("click", start);
+          });
+          action = await Promise.race([startPromise, skipPromise]);
+        }
+
+        trigger.disabled = true;
+        if (action.type === "start") {
+          intro.classList.add("is-playing");
+          status.textContent = "耳机正在浮出水面";
+          const fallbackDuration = reducedMotion ? 260 : 3300;
+          await Promise.race([
+            controller?.playIntro?.() || wait(fallbackDuration),
+            wait(fallbackDuration + 300),
+            skipPromise
+          ]);
+        } else {
+          status.textContent = "已跳过开场";
+        }
+
+        intro.classList.add("is-revealing");
+        await Promise.race([wait(reducedMotion ? 0 : 220), skipPromise]);
+        hero.insertBefore(scene, hero.firstChild);
+        scene.dataset.presentation = "hero";
+        if (controller) {
+          controller.finishIntro();
+        } else {
+          controllerLoad.then(lateController => lateController?.finishIntro());
+        }
+        document.documentElement.classList.remove("guide-intro-boot");
+        intro.classList.add("is-exiting");
+        await Promise.race([wait(reducedMotion ? 0 : 620), skipPromise]);
+        intro.remove();
+        document.body.classList.remove("guide-intro-active");
+        rememberIntro();
+        document.dispatchEvent(new CustomEvent("guide-intro:statechange"));
+        introRunning = false;
+
+        if (restoreFocus || action.keyboard || skippedByKeyboard) {
+          replayButton?.focus({ preventScroll: true });
+        }
+      } finally {
+        removeTriggerListener();
+        document.removeEventListener("keydown", handleKeydown);
+      }
+    };
+
+    replayButton?.addEventListener("click", () => runWaterIntro({ restoreFocus: true }));
+
+    if (shouldPlayInitialIntro()) {
+      runWaterIntro();
+    } else {
+      document.documentElement.classList.remove("guide-intro-boot");
+      ensureController();
+    }
   }
 
   function addBreadcrumb(main) {
@@ -293,16 +465,21 @@
     const mobileNavigation = window.matchMedia("(max-width: 980px)");
 
     const setBackgroundInert = inert => {
-      main.inert = inert;
-      brandLink.inert = inert;
-      homeLink.inert = inert;
-      if (hero) hero.inert = inert;
-      if (skipLink) skipLink.inert = inert;
+      const introActive = document.body.classList.contains("guide-intro-active");
+      header.inert = introActive;
+      shell.inert = introActive;
+      main.inert = introActive || inert;
+      brandLink.inert = introActive || inert;
+      homeLink.inert = introActive || inert;
+      menuButton.inert = introActive;
+      if (hero) hero.inert = introActive || inert;
+      if (skipLink) skipLink.inert = introActive || inert;
     };
 
     const setSidebarAvailable = available => {
-      sidebar.inert = !available;
-      if (available) sidebar.removeAttribute("aria-hidden");
+      const shouldEnable = available && !document.body.classList.contains("guide-intro-active");
+      sidebar.inert = !shouldEnable;
+      if (shouldEnable) sidebar.removeAttribute("aria-hidden");
       else sidebar.setAttribute("aria-hidden", "true");
     };
 
@@ -378,6 +555,9 @@
     } else {
       mobileNavigation.addListener(syncNavigationForViewport);
     }
+    document.addEventListener("guide-intro:statechange", () => {
+      setMenu(false, { moveFocus: false });
+    });
     syncNavigationForViewport();
 
     const progressBar = header.querySelector(".guide-progress__bar");
