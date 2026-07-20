@@ -1,20 +1,5 @@
 (() => {
   const base = "/hifi-guide";
-  const introSessionKey = "tingfan-water-intro-v1";
-  const wait = milliseconds => new Promise(resolve => window.setTimeout(resolve, milliseconds));
-  const withTimeout = (promise, milliseconds, message) => new Promise((resolve, reject) => {
-    const timeout = window.setTimeout(() => reject(new Error(message)), milliseconds);
-    promise.then(
-      value => {
-        window.clearTimeout(timeout);
-        resolve(value);
-      },
-      error => {
-        window.clearTimeout(timeout);
-        reject(error);
-      }
-    );
-  });
   const chapters = [
     {
       title: "第一章 · 听懂HiFi",
@@ -75,23 +60,6 @@
   })));
   const currentPage = allPages.find(page => normalizePath(page.path) === currentPath);
 
-  function shouldPlayInitialIntro() {
-    if (new URLSearchParams(window.location.search).get("intro") === "1") return true;
-    try {
-      return window.sessionStorage.getItem(introSessionKey) !== "complete";
-    } catch {
-      return true;
-    }
-  }
-
-  function rememberIntro() {
-    try {
-      window.sessionStorage.setItem(introSessionKey, "complete");
-    } catch {
-      // Storage can be unavailable in strict privacy modes; the intro still works.
-    }
-  }
-
   function makeHeader() {
     const header = document.createElement("header");
     header.className = "guide-header";
@@ -102,8 +70,11 @@
           <span class="guide-brand__copy"><strong>听凡 · HiFi入门指南</strong><span>把听感翻译成人话</span></span>
         </a>
         <div class="guide-header__actions">
-          <a class="guide-home-link" href="${isHomePage ? "#content" : `${base}/`}">${isHomePage ? "阅读目录" : "返回目录"}</a>
-          <button class="guide-menu-button" type="button" aria-label="打开章节目录" aria-expanded="false" aria-controls="guide-site-navigation" title="章节目录">
+          <a class="guide-home-link${isHomePage ? " guide-home-link--home" : ""}" href="${isHomePage ? "#content" : `${base}/`}" aria-label="${isHomePage ? "跳到正文" : "返回总目录"}">
+            <span class="guide-home-link__full">${isHomePage ? "阅读正文" : "返回目录"}</span>
+            <span class="guide-home-link__short" aria-hidden="true">${isHomePage ? "正文" : "目录"}</span>
+          </a>
+          <button class="guide-menu-button" type="button" aria-label="打开全书目录" aria-expanded="false" aria-controls="guide-site-navigation" title="全书目录">
             <span class="guide-menu-icon" aria-hidden="true"></span>
           </button>
         </div>
@@ -116,9 +87,21 @@
     const aside = document.createElement("aside");
     aside.className = "guide-sidebar";
     aside.id = "guide-site-navigation";
-    aside.setAttribute("aria-label", "全站章节目录");
+    aside.setAttribute("aria-label", "全书目录");
+
     const nav = document.createElement("nav");
-    nav.innerHTML = `<span class="guide-sidebar__title">阅读目录</span><a class="guide-sidebar__home" href="${base}/">总目录</a>`;
+    const title = document.createElement("span");
+    title.className = "guide-sidebar__title";
+    title.textContent = "全书目录";
+    const homeLink = document.createElement("a");
+    homeLink.className = "guide-sidebar__home";
+    homeLink.href = `${base}/`;
+    homeLink.textContent = "序言与总目录";
+    if (isHomePage) {
+      homeLink.classList.add("is-active");
+      homeLink.setAttribute("aria-current", "page");
+    }
+    nav.append(title, homeLink);
 
     chapters.forEach(chapter => {
       const heading = document.createElement("div");
@@ -126,12 +109,12 @@
       heading.textContent = chapter.title;
       nav.appendChild(heading);
 
-      chapter.pages.forEach(([title, path]) => {
+      chapter.pages.forEach(([pageTitle, pagePath]) => {
         const link = document.createElement("a");
         link.className = "guide-sidebar__link";
-        link.href = fullPath(path);
-        link.textContent = title;
-        if (normalizePath(fullPath(path)) === currentPath) {
+        link.href = fullPath(pagePath);
+        link.textContent = pageTitle;
+        if (normalizePath(fullPath(pagePath)) === currentPath) {
           link.classList.add("is-active");
           link.setAttribute("aria-current", "page");
         }
@@ -143,271 +126,11 @@
     return aside;
   }
 
-  function makeHomeHero(main) {
-    const originalTitle = main.querySelector(":scope > h1");
-    const originalTagline = originalTitle?.nextElementSibling;
-
-    const hero = document.createElement("section");
-    hero.className = "guide-hero";
-    hero.dataset.soundMode = "mid";
-    hero.setAttribute("aria-labelledby", "guide-hero-title");
-    hero.innerHTML = `
-      <div class="guide-hero__scene" data-headphone-scene tabindex="0" aria-label="可旋转的三维头戴式耳机">
-        <div class="guide-headphone-fallback" aria-hidden="true">
-          <span class="guide-headphone-fallback__band"></span>
-          <span class="guide-headphone-fallback__cup guide-headphone-fallback__cup--left"></span>
-          <span class="guide-headphone-fallback__cup guide-headphone-fallback__cup--right"></span>
-        </div>
-      </div>
-      <div class="guide-hero__inner">
-        <div class="guide-hero__copy">
-          <span class="guide-hero__eyebrow">零基础耳机听感指南</span>
-          <h1 id="guide-hero-title">听凡 · HiFi 入门指南</h1>
-          <p class="guide-hero__lead">把“低频下潜、声场、解析力、瞬态”翻译成你能听懂、能验证、能说出口的话。</p>
-          <div class="guide-sound-switcher" role="group" aria-label="选择要先听懂的频段">
-            <button type="button" data-sound-mode="low" aria-pressed="false" title="查看低频主题">低频</button>
-            <button type="button" data-sound-mode="mid" aria-pressed="true" title="查看人声主题">人声</button>
-            <button type="button" data-sound-mode="high" aria-pressed="false" title="查看高频主题">高频</button>
-          </div>
-          <div class="guide-mode-summary" aria-live="polite">
-            <strong data-mode-title>中频 · 厚度与距离</strong>
-            <span data-mode-copy>听懂歌手是厚、薄、靠前，还是被伴奏盖住。</span>
-            <a data-mode-link href="${base}/docs/3-listening/mids.html">进入中频章节</a>
-          </div>
-          <a class="guide-hero__start" href="${base}/docs/1-basics/what-is-hifi.html">从第一章开始</a>
-        </div>
-      </div>
-      <button class="guide-intro-replay" type="button" aria-label="重播水面开场" title="重播水面开场">
-        <span aria-hidden="true"></span>
-      </button>`;
-
-    originalTitle?.remove();
-    if (originalTagline?.tagName === "BLOCKQUOTE") originalTagline.remove();
-    return hero;
-  }
-
-  function makeWaterIntro() {
-    const intro = document.createElement("div");
-    intro.className = "guide-intro";
-    intro.setAttribute("role", "dialog");
-    intro.setAttribute("aria-modal", "true");
-    intro.setAttribute("aria-label", "听凡水面开场");
-    intro.innerHTML = `
-      <div class="guide-intro__stage"></div>
-      <div class="guide-intro__ripples" aria-hidden="true">
-        <span></span><span></span><span></span>
-      </div>
-      <div class="guide-intro__water" aria-hidden="true">
-        <span class="guide-intro__surface-ring guide-intro__surface-ring--one"></span>
-        <span class="guide-intro__surface-ring guide-intro__surface-ring--two"></span>
-        <span class="guide-intro__splash guide-intro__splash--one"></span>
-        <span class="guide-intro__splash guide-intro__splash--two"></span>
-        <span class="guide-intro__splash guide-intro__splash--three"></span>
-        <span class="guide-intro__splash guide-intro__splash--four"></span>
-        <span class="guide-intro__splash guide-intro__splash--five"></span>
-      </div>
-      <button class="guide-intro__trigger" type="button" aria-label="触碰水滴，进入听凡" disabled>
-        <span class="guide-intro__drop" aria-hidden="true"></span>
-      </button>
-      <span class="guide-visually-hidden" data-intro-status aria-live="polite">开场正在准备</span>`;
-    return intro;
-  }
-
-  function initHomeHero(hero) {
-    const modes = {
-      low: {
-        title: "低频 · 分量与下潜",
-        copy: "先分清低音是多、是深，还是鼓点没有及时收住。",
-        link: `${base}/docs/3-listening/bass.html`,
-        linkText: "进入低频章节"
-      },
-      mid: {
-        title: "中频 · 厚度与距离",
-        copy: "听懂歌手是厚、薄、靠前，还是被伴奏盖住。",
-        link: `${base}/docs/3-listening/mids.html`,
-        linkText: "进入中频章节"
-      },
-      high: {
-        title: "高频 · 明亮与刺激",
-        copy: "分清镲片的亮、尾音的空气感，以及真正让你不舒服的刺。",
-        link: `${base}/docs/3-listening/treble.html`,
-        linkText: "进入高频章节"
-      }
-    };
-    const buttons = [...hero.querySelectorAll("[data-sound-mode]")];
-    const switcher = hero.querySelector(".guide-sound-switcher");
-    const title = hero.querySelector("[data-mode-title]");
-    const copy = hero.querySelector("[data-mode-copy]");
-    const link = hero.querySelector("[data-mode-link]");
-    const scene = hero.querySelector("[data-headphone-scene]");
-    const replayButton = hero.querySelector(".guide-intro-replay");
-    let controllerPromise;
-    let introRunning = false;
-
-    const selectMode = mode => {
-      const content = modes[mode];
-      if (!content) return;
-      hero.dataset.soundMode = mode;
-      buttons.forEach(button => button.setAttribute("aria-pressed", String(button.dataset.soundMode === mode)));
-      title.textContent = content.title;
-      copy.textContent = content.copy;
-      link.href = content.link;
-      link.textContent = content.linkText;
-    };
-
-    buttons.forEach(button => button.addEventListener("click", () => selectMode(button.dataset.soundMode)));
-    switcher.addEventListener("keydown", event => {
-      if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
-      const currentIndex = Math.max(0, buttons.indexOf(document.activeElement));
-      const step = event.key === "ArrowRight" ? 1 : -1;
-      const next = buttons[(currentIndex + step + buttons.length) % buttons.length];
-      event.preventDefault();
-      next.focus();
-      next.click();
-    });
-
-    const markSceneFallback = () => {
-      if (!scene) return;
-      scene.classList.add("is-fallback");
-      scene.dataset.renderer = "fallback";
-      scene.removeAttribute("tabindex");
-      scene.removeAttribute("aria-busy");
-      scene.setAttribute("role", "img");
-      scene.setAttribute("aria-label", "头戴式耳机静态示意图");
-      if (scene.dataset.presentation !== "intro") scene.dataset.introState = "interactive";
-    };
-
-    const ensureController = () => {
-      if (!controllerPromise) {
-        controllerPromise = withTimeout(
-          import(`${base}/assets/js/headphone-scene.js`),
-          1800,
-          "耳机场景模块加载超时"
-        )
-          .then(module => module.initHeadphoneScene(scene))
-          .catch(() => {
-            markSceneFallback();
-            return null;
-          });
-      }
-      return controllerPromise;
-    };
-
-    const runWaterIntro = async ({ restoreFocus = false } = {}) => {
-      if (introRunning || !scene) return;
-      introRunning = true;
-
-      const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      const intro = makeWaterIntro();
-      const stage = intro.querySelector(".guide-intro__stage");
-      const trigger = intro.querySelector(".guide-intro__trigger");
-      const status = intro.querySelector("[data-intro-status]");
-      scene.dataset.presentation = "intro";
-      stage.appendChild(scene);
-      document.body.appendChild(intro);
-      document.body.classList.add("guide-intro-active");
-      document.dispatchEvent(new CustomEvent("guide-intro:statechange"));
-      requestAnimationFrame(() => intro.classList.add("is-mounted"));
-
-      let controller = null;
-      let removeTriggerListener = () => {};
-      let resolveSkip;
-      let skippedByKeyboard = false;
-      const skipPromise = new Promise(resolve => {
-        resolveSkip = () => resolve({ type: "skip", keyboard: true });
-      });
-      const handleKeydown = event => {
-        if (event.key !== "Escape") return;
-        event.preventDefault();
-        skippedByKeyboard = true;
-        resolveSkip();
-      };
-      document.addEventListener("keydown", handleKeydown);
-
-      try {
-        const controllerLoad = ensureController().then(value => {
-          controller = value;
-          return value;
-        });
-        const loadResult = await Promise.race([
-          controllerLoad.then(value => ({ type: "loaded", value })),
-          skipPromise
-        ]);
-        let action = loadResult;
-
-        if (loadResult.type === "loaded") {
-          controller = loadResult.value;
-          controller?.prepareIntro();
-          intro.classList.add("is-ready");
-          trigger.disabled = false;
-          status.textContent = "水滴已准备好";
-          trigger.focus({ preventScroll: true });
-
-          const startPromise = new Promise(resolve => {
-            const start = event => resolve({ type: "start", keyboard: event.detail === 0 });
-            trigger.addEventListener("click", start, { once: true });
-            removeTriggerListener = () => trigger.removeEventListener("click", start);
-          });
-          action = await Promise.race([startPromise, skipPromise]);
-        }
-
-        trigger.disabled = true;
-        if (action.type === "start") {
-          intro.classList.add("is-playing");
-          status.textContent = "耳机正在浮出水面";
-          const fallbackDuration = reducedMotion ? 260 : 3300;
-          await Promise.race([
-            controller?.playIntro?.() || wait(fallbackDuration),
-            wait(fallbackDuration + 300),
-            skipPromise
-          ]);
-        } else {
-          status.textContent = "已跳过开场";
-        }
-
-        intro.classList.add("is-revealing");
-        await Promise.race([wait(reducedMotion ? 0 : 220), skipPromise]);
-        hero.insertBefore(scene, hero.firstChild);
-        scene.dataset.presentation = "hero";
-        if (controller) {
-          controller.finishIntro();
-        } else {
-          scene.dataset.introState = "interactive";
-          controllerLoad.then(lateController => lateController?.finishIntro());
-        }
-        document.documentElement.classList.remove("guide-intro-boot");
-        intro.classList.add("is-exiting");
-        await Promise.race([wait(reducedMotion ? 0 : 620), skipPromise]);
-        intro.remove();
-        document.body.classList.remove("guide-intro-active");
-        rememberIntro();
-        document.dispatchEvent(new CustomEvent("guide-intro:statechange"));
-        introRunning = false;
-
-        if (restoreFocus || action.keyboard || skippedByKeyboard) {
-          replayButton?.focus({ preventScroll: true });
-        }
-      } finally {
-        removeTriggerListener();
-        document.removeEventListener("keydown", handleKeydown);
-      }
-    };
-
-    replayButton?.addEventListener("click", () => runWaterIntro({ restoreFocus: true }));
-
-    if (shouldPlayInitialIntro()) {
-      runWaterIntro();
-    } else {
-      document.documentElement.classList.remove("guide-intro-boot");
-      ensureController();
-    }
-  }
-
   function addBreadcrumb(main) {
     if (!currentPage) return;
     const breadcrumb = document.createElement("nav");
     breadcrumb.className = "guide-breadcrumb";
-    breadcrumb.setAttribute("aria-label", "面包屑");
+    breadcrumb.setAttribute("aria-label", "当前位置");
     breadcrumb.innerHTML = `
       <a href="${base}/">总目录</a><span aria-hidden="true">/</span>
       <span>${currentPage.chapter}</span><span aria-hidden="true">/</span>
@@ -418,22 +141,25 @@
   function addOnPageNavigation(main) {
     const headings = [...main.querySelectorAll("h2")].filter(heading => heading.id);
     if (headings.length < 3) return;
+
     const details = document.createElement("details");
     details.className = "on-page";
     if (window.innerWidth > 980) details.open = true;
     const summary = document.createElement("summary");
-    summary.textContent = "本页内容";
+    summary.textContent = "本页目录";
     const links = document.createElement("div");
     links.className = "on-page__links";
+
     headings.forEach(heading => {
       const link = document.createElement("a");
       link.href = `#${heading.id}`;
       link.textContent = heading.textContent;
       links.appendChild(link);
     });
+
     details.append(summary, links);
-    const title = main.querySelector("h1");
-    if (title) title.insertAdjacentElement("afterend", details);
+    const pageTitle = main.querySelector("h1");
+    if (pageTitle) pageTitle.insertAdjacentElement("afterend", details);
   }
 
   function updateReadingProgress(bar, main) {
@@ -453,7 +179,6 @@
 
     const header = makeHeader();
     const sidebar = makeSidebar();
-    const hero = isHomePage ? makeHomeHero(main) : null;
     const shell = document.createElement("div");
     shell.className = "guide-shell";
     const overlay = document.createElement("div");
@@ -462,16 +187,12 @@
 
     document.body.insertBefore(header, pageHeader);
     document.body.insertBefore(shell, main);
-    if (hero) document.body.insertBefore(hero, shell);
     shell.append(sidebar, main);
     document.body.appendChild(overlay);
+    document.body.classList.toggle("guide-index", isHomePage);
 
     addBreadcrumb(main);
-    addOnPageNavigation(main);
-    if (hero) {
-      document.body.classList.add("guide-home");
-      initHomeHero(hero);
-    }
+    if (!isHomePage) addOnPageNavigation(main);
 
     const footer = main.querySelector(".site-footer");
     if (footer) {
@@ -484,26 +205,20 @@
     const mobileNavigation = window.matchMedia("(max-width: 980px)");
 
     const setBackgroundInert = inert => {
-      const introActive = document.body.classList.contains("guide-intro-active");
-      header.inert = introActive;
-      shell.inert = introActive;
-      main.inert = introActive || inert;
-      brandLink.inert = introActive || inert;
-      homeLink.inert = introActive || inert;
-      menuButton.inert = introActive;
-      if (hero) hero.inert = introActive || inert;
-      if (skipLink) skipLink.inert = introActive || inert;
+      main.inert = inert;
+      brandLink.inert = inert;
+      homeLink.inert = inert;
+      if (skipLink) skipLink.inert = inert;
     };
 
     const setSidebarAvailable = available => {
-      const shouldEnable = available && !document.body.classList.contains("guide-intro-active");
-      sidebar.inert = !shouldEnable;
-      if (shouldEnable) sidebar.removeAttribute("aria-hidden");
+      sidebar.inert = !available;
+      if (available) sidebar.removeAttribute("aria-hidden");
       else sidebar.setAttribute("aria-hidden", "true");
     };
 
     const focusCurrentNavigationItem = () => {
-      const target = sidebar.querySelector(".guide-sidebar__link.is-active") || sidebar.querySelector(".guide-sidebar__home");
+      const target = sidebar.querySelector("[aria-current='page']") || sidebar.querySelector(".guide-sidebar__home");
       if (!target) return;
       requestAnimationFrame(() => {
         if (!mobileNavigation.matches || !document.body.classList.contains("guide-nav-open")) return;
@@ -516,7 +231,7 @@
       const shouldOpen = Boolean(open && mobileNavigation.matches);
       document.body.classList.toggle("guide-nav-open", shouldOpen);
       menuButton.setAttribute("aria-expanded", String(shouldOpen));
-      menuButton.setAttribute("aria-label", shouldOpen ? "关闭章节目录" : "打开章节目录");
+      menuButton.setAttribute("aria-label", shouldOpen ? "关闭全书目录" : "打开全书目录");
       setBackgroundInert(shouldOpen);
 
       if (shouldOpen) {
@@ -574,9 +289,6 @@
     } else {
       mobileNavigation.addListener(syncNavigationForViewport);
     }
-    document.addEventListener("guide-intro:statechange", () => {
-      setMenu(false, { moveFocus: false });
-    });
     syncNavigationForViewport();
 
     const progressBar = header.querySelector(".guide-progress__bar");

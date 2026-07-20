@@ -1,15 +1,3 @@
 <link rel="icon" type="image/svg+xml" href="{{ '/assets/images/favicon.svg' | relative_url }}">
-<script>
-  (() => {
-    const path = window.location.pathname.replace(/\/+$/, "");
-    const isHome = path === "{{ site.baseurl }}" || path === "{{ site.baseurl }}/index.html";
-    if (!isHome) return;
-    const forced = new URLSearchParams(window.location.search).get("intro") === "1";
-    let seen = false;
-    try { seen = window.sessionStorage.getItem("tingfan-water-intro-v1") === "complete"; } catch {}
-    if (forced || !seen) document.documentElement.classList.add("guide-intro-boot");
-    window.setTimeout(() => document.documentElement.classList.remove("guide-intro-boot"), 6000);
-  })();
-</script>
 <link rel="stylesheet" href="{{ '/assets/css/custom.css' | relative_url }}">
 <script defer src="{{ '/assets/js/site.js' | relative_url }}"></script>
