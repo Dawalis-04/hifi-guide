@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480" role="img" aria-labelledby="title desc">
+  <title id="title">低频量感曲线对比</title>
+  <desc id="desc">绿色实线在20到250赫兹明显高于蓝色虚线，表示在相同测量条件下低频相对更多。两条线进入中频后逐渐靠拢。</desc>
+  <rect width="920" height="480" fill="#ffffff"/>
+  <rect x="90" y="58" width="760" height="332" rx="6" fill="#f7faf8" stroke="#d8dfdb"/>
+  <rect x="90" y="58" width="286" height="332" fill="#e7f2ed"/>
+  <g stroke="#d8dfdb" stroke-width="1"><path d="M90 88H850M90 166H850M90 244H850M90 322H850M90 390H850"/><path d="M90 58V390M194 58V390M272 58V390M376 58V390M532 58V390M688 58V390M850 58V390"/></g>
+  <path d="M90 244H850" stroke="#7d8a85" stroke-width="2"/>
+  <path d="M90 139 C150 126 220 133 272 154 C320 176 344 205 376 218 C470 239 610 237 850 244" fill="none" stroke="#126b55" stroke-width="5" stroke-linecap="round"/>
+  <path d="M90 238 C152 230 214 224 272 226 C320 229 350 235 376 239 C500 245 660 244 850 244" fill="none" stroke="#326b91" stroke-width="5" stroke-dasharray="12 9" stroke-linecap="round"/>
+  <g font-family="Microsoft YaHei UI, PingFang SC, sans-serif" fill="#44514d" font-size="22">
+    <text x="74" y="94" text-anchor="end">+10</text><text x="74" y="172" text-anchor="end">+5</text><text x="74" y="250" text-anchor="end">0</text><text x="74" y="328" text-anchor="end">-5</text><text x="74" y="396" text-anchor="end">-10</text>
+    <text x="90" y="418" text-anchor="middle">20</text><text x="194" y="418" text-anchor="middle">50</text><text x="272" y="418" text-anchor="middle">100</text><text x="376" y="418" text-anchor="middle">250</text><text x="532" y="418" text-anchor="middle">1k</text><text x="688" y="418" text-anchor="middle">4k</text><text x="850" y="418" text-anchor="middle">20k</text>
+    <text x="470" y="458" text-anchor="middle" font-size="26" font-weight="700">频率（Hz，对数刻度）</text>
+    <text x="28" y="224" text-anchor="middle" transform="rotate(-90 28 224)" font-size="26" font-weight="700">相对电平（dB）</text>
+  </g>
+  <g font-family="Microsoft YaHei UI, PingFang SC, sans-serif" font-size="24" font-weight="800"><text x="118" y="112" fill="#126b55">实线：低频较多</text><text x="118" y="284" fill="#326b91">虚线：低频克制</text><text x="234" y="372" text-anchor="middle" fill="#126b55">重点观察 20-250Hz</text></g>
+</svg>

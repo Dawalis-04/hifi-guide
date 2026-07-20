@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480" role="img" aria-labelledby="title desc">
+  <title id="title">中频与人声存在感曲线对比</title>
+  <desc id="desc">蓝色实线在2到4千赫兹区域相对抬升，橙色虚线在同一区域较低，示意在相同测量条件下人声存在感可能更近或更远。</desc>
+  <rect width="920" height="480" fill="#ffffff"/>
+  <rect x="90" y="58" width="760" height="332" rx="6" fill="#f7faf8" stroke="#d8dfdb"/>
+  <rect x="376" y="58" width="312" height="332" fill="#e8f1f7"/>
+  <g stroke="#d8dfdb" stroke-width="1"><path d="M90 88H850M90 166H850M90 244H850M90 322H850M90 390H850"/><path d="M90 58V390M272 58V390M376 58V390M454 58V390M532 58V390M610 58V390M688 58V390M850 58V390"/></g>
+  <path d="M90 244H850" stroke="#7d8a85" stroke-width="2"/>
+  <path d="M90 231 C210 223 300 230 376 225 C448 220 508 206 550 174 C580 151 610 132 642 158 C668 180 682 215 688 226 C746 238 798 241 850 244" fill="none" stroke="#326b91" stroke-width="5" stroke-linecap="round"/>
+  <path d="M90 231 C220 224 306 231 376 229 C462 226 522 236 572 250 C618 262 660 254 688 239 C744 239 800 242 850 244" fill="none" stroke="#bd4d3d" stroke-width="5" stroke-dasharray="12 9" stroke-linecap="round"/>
+  <g font-family="Microsoft YaHei UI, PingFang SC, sans-serif" fill="#44514d" font-size="22"><text x="74" y="94" text-anchor="end">+10</text><text x="74" y="172" text-anchor="end">+5</text><text x="74" y="250" text-anchor="end">0</text><text x="74" y="328" text-anchor="end">-5</text><text x="74" y="396" text-anchor="end">-10</text><text x="90" y="418" text-anchor="middle">20</text><text x="272" y="418" text-anchor="middle">100</text><text x="376" y="418" text-anchor="middle">250</text><text x="454" y="418" text-anchor="middle">500</text><text x="532" y="418" text-anchor="middle">1k</text><text x="610" y="418" text-anchor="middle">2k</text><text x="688" y="418" text-anchor="middle">4k</text><text x="850" y="418" text-anchor="middle">20k</text><text x="470" y="458" text-anchor="middle" font-size="26" font-weight="700">频率（Hz，对数刻度）</text><text x="28" y="224" text-anchor="middle" transform="rotate(-90 28 224)" font-size="26" font-weight="700">相对电平（dB）</text></g>
+  <g font-family="Microsoft YaHei UI, PingFang SC, sans-serif" font-size="24" font-weight="800"><text x="470" y="88" fill="#326b91">实线：2-4kHz相对抬升</text><text x="470" y="310" fill="#bd4d3d">虚线：2-4kHz相对收敛</text><text x="532" y="370" text-anchor="middle" fill="#326b91">重点观察 250Hz-4kHz</text></g>
+</svg>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480" role="img" aria-labelledby="title desc">
+  <title id="title">频响图坐标轴与三段频率示意</title>
+  <desc id="desc">横轴从20赫兹到20千赫兹并使用对数刻度，纵轴是相对电平。背景依次标出低频、中频和高频区域，一条示例曲线贯穿三个区域。</desc>
+  <rect width="920" height="480" fill="#ffffff"/>
+  <rect x="90" y="58" width="760" height="332" rx="6" fill="#f7faf8" stroke="#d8dfdb"/>
+  <rect x="90" y="58" width="244" height="332" fill="#e7f2ed"/>
+  <rect x="334" y="58" width="340" height="332" fill="#e8f1f7"/>
+  <rect x="674" y="58" width="176" height="332" fill="#fff3df"/>
+  <g stroke="#d8dfdb" stroke-width="1">
+    <path d="M90 88H850M90 166H850M90 244H850M90 322H850M90 390H850"/>
+    <path d="M90 58V390M194 58V390M272 58V390M376 58V390M454 58V390M532 58V390M610 58V390M688 58V390M766 58V390M850 58V390"/>
+  </g>
+  <path d="M90 244H850" stroke="#7d8a85" stroke-width="2"/>
+  <path d="M90 205 C150 183 220 176 272 192 C320 207 366 225 420 218 C480 210 520 160 572 154 C622 150 646 204 688 192 C724 181 744 135 770 154 C800 176 824 211 850 225" fill="none" stroke="#126b55" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+  <g fill="#44514d" font-family="Microsoft YaHei UI, PingFang SC, sans-serif" font-size="22">
+    <text x="74" y="94" text-anchor="end">+10</text><text x="74" y="172" text-anchor="end">+5</text><text x="74" y="250" text-anchor="end">0</text><text x="74" y="328" text-anchor="end">-5</text><text x="74" y="396" text-anchor="end">-10</text>
+    <text x="90" y="418" text-anchor="middle">20</text><text x="194" y="418" text-anchor="middle">50</text><text x="272" y="418" text-anchor="middle">100</text><text x="376" y="418" text-anchor="middle">250</text><text x="454" y="418" text-anchor="middle">500</text><text x="532" y="418" text-anchor="middle">1k</text><text x="610" y="418" text-anchor="middle">2k</text><text x="688" y="418" text-anchor="middle">4k</text><text x="766" y="418" text-anchor="middle">8k</text><text x="850" y="418" text-anchor="middle">20k</text>
+    <text x="470" y="458" text-anchor="middle" font-size="26" font-weight="700">频率（Hz，对数刻度）</text>
+    <text x="28" y="224" text-anchor="middle" transform="rotate(-90 28 224)" font-size="26" font-weight="700">相对电平（dB）</text>
+  </g>
+  <g font-family="Microsoft YaHei UI, PingFang SC, sans-serif" font-size="26" font-weight="800">
+    <text x="212" y="88" text-anchor="middle" fill="#126b55">低频 20-250Hz</text>
+    <text x="504" y="88" text-anchor="middle" fill="#326b91">中频 250Hz-4kHz</text>
+    <text x="762" y="88" text-anchor="middle" fill="#9a610b">高频 4kHz-20kHz</text>
+  </g>
+</svg>

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="480" viewBox="0 0 920 480" role="img" aria-labelledby="title desc">
+  <title id="title">高频能量走势曲线对比</title>
+  <desc id="desc">绿色实线与橙色虚线在4千赫兹以前接近，在8千赫兹以上出现不同峰谷。图中提醒高频结果容易受佩戴和测量条件影响。</desc>
+  <rect width="920" height="480" fill="#ffffff"/>
+  <rect x="90" y="58" width="760" height="332" rx="6" fill="#f7faf8" stroke="#d8dfdb"/>
+  <rect x="688" y="58" width="162" height="332" fill="#fff3df"/>
+  <g stroke="#d8dfdb" stroke-width="1"><path d="M90 88H850M90 166H850M90 244H850M90 322H850M90 390H850"/><path d="M90 58V390M272 58V390M376 58V390M532 58V390M688 58V390M766 58V390M850 58V390"/></g>
+  <path d="M90 244H850" stroke="#7d8a85" stroke-width="2"/>
+  <path d="M90 232 C250 228 410 230 532 226 C610 221 652 215 688 205 C716 191 738 145 762 156 C786 168 794 225 814 210 C832 195 838 178 850 194" fill="none" stroke="#126b55" stroke-width="5" stroke-linecap="round"/>
+  <path d="M90 232 C250 228 410 230 532 228 C620 228 660 232 688 235 C720 242 744 264 766 253 C790 242 804 224 824 235 C840 244 844 250 850 247" fill="none" stroke="#9a610b" stroke-width="5" stroke-dasharray="12 9" stroke-linecap="round"/>
+  <g font-family="Microsoft YaHei UI, PingFang SC, sans-serif" fill="#44514d" font-size="22"><text x="74" y="94" text-anchor="end">+10</text><text x="74" y="172" text-anchor="end">+5</text><text x="74" y="250" text-anchor="end">0</text><text x="74" y="328" text-anchor="end">-5</text><text x="74" y="396" text-anchor="end">-10</text><text x="90" y="418" text-anchor="middle">20</text><text x="272" y="418" text-anchor="middle">100</text><text x="376" y="418" text-anchor="middle">250</text><text x="532" y="418" text-anchor="middle">1k</text><text x="688" y="418" text-anchor="middle">4k</text><text x="766" y="418" text-anchor="middle">8k</text><text x="850" y="418" text-anchor="middle">20k</text><text x="470" y="458" text-anchor="middle" font-size="26" font-weight="700">频率（Hz，对数刻度）</text><text x="28" y="224" text-anchor="middle" transform="rotate(-90 28 224)" font-size="26" font-weight="700">相对电平（dB）</text></g>
+  <g font-family="Microsoft YaHei UI, PingFang SC, sans-serif" font-size="24" font-weight="800"><text x="840" y="108" text-anchor="end" fill="#126b55">实线：高频相对更亮</text><text x="840" y="314" text-anchor="end" fill="#9a610b">虚线：高频相对柔和</text><text x="770" y="372" text-anchor="middle" fill="#9a610b">4kHz以上测量更易波动</text></g>
+</svg>
