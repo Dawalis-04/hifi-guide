@@ -7,6 +7,20 @@ const MODE_SETTINGS = Object.freeze({
 const initializedScenes = new WeakMap();
 let threeModulePromise;
 
+const withTimeout = (promise, milliseconds, message) => new Promise((resolve, reject) => {
+  const timeout = window.setTimeout(() => reject(new Error(message)), milliseconds);
+  promise.then(
+    value => {
+      window.clearTimeout(timeout);
+      resolve(value);
+    },
+    error => {
+      window.clearTimeout(timeout);
+      reject(error);
+    }
+  );
+});
+
 function loadThree() {
   if (!threeModulePromise) {
     threeModulePromise = import("./vendor/three.module.min.js");
@@ -279,7 +293,7 @@ async function createScene(container) {
 
   let THREE;
   try {
-    THREE = await loadThree();
+    THREE = await withTimeout(loadThree(), 3000, "Three.js module load timed out");
   } catch (error) {
     markFallback(container, error);
     return null;
@@ -835,20 +849,4 @@ export function initHeadphoneScene(container) {
 export function initHeadphoneScenes(root = document) {
   const containers = [...root.querySelectorAll("[data-headphone-scene]")];
   return Promise.all(containers.map(initHeadphoneScene));
-}
-
-function boot() {
-  initHeadphoneScenes().catch(error => {
-    document.querySelectorAll("[data-headphone-scene]").forEach(container => {
-      markFallback(container, error);
-    });
-  });
-}
-
-if (typeof document !== "undefined") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", boot, { once: true });
-  } else {
-    boot();
-  }
 }

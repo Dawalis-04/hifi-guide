@@ -2,6 +2,19 @@
   const base = "/hifi-guide";
   const introSessionKey = "tingfan-water-intro-v1";
   const wait = milliseconds => new Promise(resolve => window.setTimeout(resolve, milliseconds));
+  const withTimeout = (promise, milliseconds, message) => new Promise((resolve, reject) => {
+    const timeout = window.setTimeout(() => reject(new Error(message)), milliseconds);
+    promise.then(
+      value => {
+        window.clearTimeout(timeout);
+        resolve(value);
+      },
+      error => {
+        window.clearTimeout(timeout);
+        reject(error);
+      }
+    );
+  });
   const chapters = [
     {
       title: "第一章 · 听懂HiFi",
@@ -261,11 +274,16 @@
       scene.removeAttribute("aria-busy");
       scene.setAttribute("role", "img");
       scene.setAttribute("aria-label", "头戴式耳机静态示意图");
+      if (scene.dataset.presentation !== "intro") scene.dataset.introState = "interactive";
     };
 
     const ensureController = () => {
       if (!controllerPromise) {
-        controllerPromise = import(`${base}/assets/js/headphone-scene.js`)
+        controllerPromise = withTimeout(
+          import(`${base}/assets/js/headphone-scene.js`),
+          1800,
+          "耳机场景模块加载超时"
+        )
           .then(module => module.initHeadphoneScene(scene))
           .catch(() => {
             markSceneFallback();
@@ -354,6 +372,7 @@
         if (controller) {
           controller.finishIntro();
         } else {
+          scene.dataset.introState = "interactive";
           controllerLoad.then(lateController => lateController?.finishIntro());
         }
         document.documentElement.classList.remove("guide-intro-boot");
